@@ -5,9 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>INVERSIÓN PRO</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        body { background-color: #080c14; color: #ffffff; font-family: system-ui, -apple-system, sans-serif; padding-bottom: 40px; }
+        body { background-color: #080c14; color: #ffffff; font-family: system-ui, sans-serif; padding-bottom: 40px; }
         .card-dark { background-color: #0f172a; border: 1px solid #1e293b; border-radius: 18px; }
         .btn-green { background-color: #10b981; color: white; font-weight: 700; border: none; }
         .btn-green:hover { background-color: #059669; color: white; }
@@ -28,13 +27,7 @@
             <div id="roleBadge"></div>
         </div>
 
-        <div class="d-flex justify-content-between small text-secondary mb-4">
-            <span>🛡️ Cifrado SSL 256-Bit</span>
-            <span>🔄 Pagos en &lt; 24 hrs</span>
-            <span>👥 +12,400 Usuarios</span>
-        </div>
-
-        <!-- FORMULARIO LOGIN / REGISTRO -->
+        <!-- AUTH CONTAINER -->
         <div id="authContainer" class="card card-dark p-4 mb-4">
             <ul class="nav nav-pills nav-justified mb-3">
                 <li class="nav-item">
@@ -45,10 +38,9 @@
                 </li>
             </ul>
 
-            <!-- LOGIN -->
             <form id="loginForm" onsubmit="handleLogin(event)">
                 <div class="mb-3">
-                    <label class="form-label text-secondary small">Número de Teléfono</label>
+                    <label class="form-label text-secondary small">Teléfono</label>
                     <input type="text" id="loginPhone" class="form-control bg-dark text-white border-secondary" placeholder="Ej: 5512345678" required>
                 </div>
                 <div class="mb-3">
@@ -58,7 +50,6 @@
                 <button type="submit" class="btn btn-green w-100 py-2">Entrar</button>
             </form>
 
-            <!-- REGISTRO -->
             <form id="registerForm" onsubmit="handleRegister(event)" style="display: none;">
                 <div class="mb-3">
                     <label class="form-label text-secondary small">Nombre Completo</label>
@@ -66,15 +57,15 @@
                 </div>
                 <div class="mb-3">
                     <label class="form-label text-secondary small">Número de Teléfono</label>
-                    <input type="text" id="regPhone" class="form-control bg-dark text-white border-secondary" placeholder="Ej: 5512345678" required>
+                    <input type="text" id="regPhone" class="form-control bg-dark text-white border-secondary" required>
                 </div>
                 <div class="mb-3">
                     <label class="form-label text-secondary small">Contraseña</label>
                     <input type="password" id="regPassword" class="form-control bg-dark text-white border-secondary" required>
                 </div>
                 <div class="mb-3">
-                    <label class="form-label text-secondary small">Código / Teléfono de Invitado (Opcional)</label>
-                    <input type="text" id="regReferral" class="form-control bg-dark text-white border-secondary" placeholder="Ej: 5512345678">
+                    <label class="form-label text-secondary small">Código de Invitado (Opcional)</label>
+                    <input type="text" id="regReferral" class="form-control bg-dark text-white border-secondary">
                 </div>
                 <button type="submit" class="btn btn-primary w-100 py-2 fw-bold">Crear Cuenta</button>
             </form>
@@ -83,249 +74,155 @@
         <!-- DASHBOARD CLIENTE -->
         <div id="mainDashboard" style="display: none;">
             
-            <!-- TARJETA SALDO -->
+            <!-- SALDO -->
             <div class="card card-dark p-4 mb-4">
                 <small class="text-secondary fw-bold">SALDO DISPONIBLE</small>
                 <h1 class="fw-bold my-2" id="userBalance">$0.00 <span class="fs-6 text-secondary">USDT</span></h1>
 
                 <div class="d-flex gap-2 my-3">
-                    <button class="btn btn-green flex-grow-1 py-3 fs-5" onclick="mostrarModalDeposito()">Depositar</button>
-                    <button class="btn btn-outline-light flex-grow-1 py-3 fs-5" onclick="alert('Opción de retiro en proceso')">Retirar</button>
+                    <button class="btn btn-green flex-grow-1 py-3 fs-5" onclick="toggleSeccion('depositSection')">Depositar</button>
+                    <button class="btn btn-outline-light flex-grow-1 py-3 fs-5" onclick="toggleSeccion('withdrawSection')">Retirar</button>
                 </div>
-
-                <hr class="border-secondary opacity-25">
 
                 <div class="row text-center pt-2">
-                    <div class="col-6 border-end border-secondary border-opacity-25">
-                        <small class="text-secondary d-block">Ganancia Diaria Est.</small>
-                        <span class="text-green fw-bold fs-5" id="dailyReturnText">+$0.00 USDT</span>
-                    </div>
-                    <div class="col-6">
-                        <small class="text-secondary d-block">Bono por Referidos</small>
+                    <div class="col-6 border-end border-secondary">
+                        <small class="text-secondary d-block">Ganancias por Referidos</small>
                         <span class="fw-bold fs-5 text-warning" id="referralBonusText">$0.00 USDT</span>
                     </div>
+                    <div class="col-6">
+                        <small class="text-secondary d-block">Invitados</small>
+                        <span class="fw-bold fs-5 text-white" id="friendsCount">0</span>
+                    </div>
                 </div>
             </div>
 
-            <!-- MODAL DEPÓSITO BITSO -->
+            <!-- MODAL DEPÓSITO CON DIRECCIÓN/CLABE VISIBLE -->
             <div id="depositSection" class="card card-dark p-4 mb-4" style="display: none; border-color: #10b981;">
-                <h5 class="fw-bold text-green mb-2">💳 Depósito vía Bitso</h5>
-                <p class="text-secondary small">
-                    Realiza tu transferencia a nuestra cuenta Bitso / SPEI. Ingresa el monto para enviar tu solicitud a revisión y el administrador acreditará tu saldo.
-                </p>
+                <h5 class="fw-bold text-green mb-2">💳 Depositar Fondos</h5>
+                <p class="text-secondary small">Realiza tu depósito a la siguiente cuenta y notifícalo abajo:</p>
+                
+                <div class="bg-black p-3 rounded border border-secondary mb-3">
+                    <small class="text-secondary d-block">Cuenta Bitso / CLABE SPEI / Wallet:</small>
+                    <!-- CAMBIA ESTO POR TU CUENTA REAL -->
+                    <strong class="text-warning fs-6">646180123456789012 (Bitso)</strong>
+                </div>
+
                 <div class="mb-3">
                     <label class="form-label text-secondary small">Monto Depositado (USDT / MXN)</label>
-                    <input type="number" id="depositAmount" class="form-control bg-dark text-white border-secondary" placeholder="Ej: 50 USDT / $1,000 MXN">
+                    <input type="number" id="depositAmount" class="form-control bg-dark text-white border-secondary" placeholder="Ej: 20">
                 </div>
                 <div class="d-flex gap-2">
-                    <button class="btn btn-green flex-grow-1" onclick="enviarDepositoBitso()">Notificar Depósito</button>
-                    <button class="btn btn-outline-secondary" onclick="ocultarModalDeposito()">Cancelar</button>
+                    <button class="btn btn-green flex-grow-1" onclick="enviarDeposito()">Notificar Depósito</button>
+                    <button class="btn btn-outline-secondary" onclick="toggleSeccion('depositSection')">Cancelar</button>
                 </div>
             </div>
 
-            <!-- CRECIMIENTO ESTIMADO -->
-            <div class="card card-dark p-4 mb-4">
-                <div class="d-flex justify-content-between align-items-center mb-3">
-                    <h6 class="fw-bold mb-0">📈 Crecimiento Estimado</h6>
-                    <small class="text-secondary">Próximos 7 días</small>
+            <!-- MODAL RETIRO CON CUENTA BANCARIA -->
+            <div id="withdrawSection" class="card card-dark p-4 mb-4" style="display: none; border-color: #ef4444;">
+                <h5 class="fw-bold text-danger mb-2">💸 Solicitar Retiro</h5>
+                <p class="text-secondary small">Ingresa tu cuenta bancaria o wallet donde deseas recibir tu dinero:</p>
+                
+                <div class="mb-3">
+                    <label class="form-label text-secondary small">Datos Bancarios (Banco, Clabe o Wallet USDT)</label>
+                    <input type="text" id="withdrawBankDetails" class="form-control bg-dark text-white border-secondary" placeholder="Ej: BBVA CLABE 1234... o Wallet TRC20">
                 </div>
-                <canvas id="growthChart" height="150"></canvas>
+                <div class="mb-3">
+                    <label class="form-label text-secondary small">Monto a Retirar (USDT)</label>
+                    <input type="number" id="withdrawAmount" class="form-control bg-dark text-white border-secondary" placeholder="Ej: 10">
+                </div>
+                <div class="d-flex gap-2">
+                    <button class="btn btn-danger flex-grow-1" onclick="enviarRetiro()">Solicitar Retiro</button>
+                    <button class="btn btn-outline-secondary" onclick="toggleSeccion('withdrawSection')">Cancelar</button>
+                </div>
             </div>
 
-            <!-- LOS 6 PLANES DE INVERSIÓN OFICIALES -->
+            <!-- SECCIÓN: MIS COMPRAS / INVERSIONES ACTIVAS -->
+            <div class="card card-dark p-4 mb-4 border-info">
+                <h5 class="fw-bold text-info mb-3">🛒 Mis Inversiones Activas</h5>
+                <div id="userInvestmentsList">
+                    <p class="text-secondary small">No tienes compras activas en este momento.</p>
+                </div>
+            </div>
+
+            <!-- PLANES DE INVERSIÓN -->
             <div class="mb-4">
-                <h4 class="fw-bold mb-1">📦 Planes de Inversión Fija</h4>
-                <p class="text-secondary small mb-3">Selecciona un plan para activar tus rendimientos diarios:</p>
+                <h4 class="fw-bold mb-1">📦 Planes de Inversión</h4>
+                <p class="text-secondary small mb-3">Comprar un plan descontará el monto de tu saldo disponible:</p>
 
-                <!-- PLAN 1: INICIAL -->
+                <!-- PLAN 1 -->
                 <div class="plan-card p-4 mb-3">
-                    <div class="d-flex justify-content-between align-items-start mb-2">
-                        <div>
-                            <h5 class="fw-bold mb-0">Plan Inicial</h5>
-                            <small class="text-secondary">Duración: 60 días</small>
-                        </div>
-                        <div class="text-end">
-                            <span class="fs-4 fw-bold text-green">2.50%</span>
-                            <small class="d-block text-secondary">AL DÍA</small>
-                        </div>
+                    <h5 class="fw-bold">Plan Inicial</h5>
+                    <div class="d-flex justify-content-between small text-secondary">
+                        <span>Costo: <strong>20 USDT ($400 MXN)</strong></span>
+                        <span class="text-green"><strong>+0.50 USDT/día</strong></span>
                     </div>
-                    <hr class="border-secondary opacity-25">
-                    <div class="d-flex justify-content-between small text-secondary mb-1">
-                        <span>Costo:</span>
-                        <strong class="text-white">20 USDT <small class="text-secondary">($400 MXN)</small></strong>
-                    </div>
-                    <div class="d-flex justify-content-between small text-secondary mb-1">
-                        <span>Retorno Diario:</span>
-                        <strong class="text-green">+0.50 USDT/día <small>($10 MXN)</small></strong>
-                    </div>
-                    <div class="d-flex justify-content-between small text-secondary mb-3">
-                        <span>Ganancia Total:</span>
-                        <strong class="text-warning">10 USDT <small>($200 MXN)</small></strong>
-                    </div>
-                    <button class="btn btn-green w-100 py-2" onclick="alert('Plan Inicial seleccionado.')">Invertir Ahora</button>
+                    <small class="d-block text-secondary mb-3">Duración: 60 días | Ganancia Total: 10 USDT ($200 MXN)</small>
+                    <button class="btn btn-green w-100" onclick="comprarPlan('Plan Inicial', 20, 0.50, 60)">Comprar Plan (20 USDT)</button>
                 </div>
 
-                <!-- PLAN 2: PLATA -->
+                <!-- PLAN 2 -->
                 <div class="plan-card p-4 mb-3">
-                    <div class="d-flex justify-content-between align-items-start mb-2">
-                        <div>
-                            <h5 class="fw-bold mb-0">Plan Plata</h5>
-                            <small class="text-secondary">Duración: 60 días</small>
-                        </div>
-                        <div class="text-end">
-                            <span class="fs-4 fw-bold text-green">3.33%</span>
-                            <small class="d-block text-secondary">AL DÍA</small>
-                        </div>
+                    <h5 class="fw-bold">Plan Plata</h5>
+                    <div class="d-flex justify-content-between small text-secondary">
+                        <span>Costo: <strong>75 USDT ($1,500 MXN)</strong></span>
+                        <span class="text-green"><strong>+2.50 USDT/día</strong></span>
                     </div>
-                    <hr class="border-secondary opacity-25">
-                    <div class="d-flex justify-content-between small text-secondary mb-1">
-                        <span>Costo:</span>
-                        <strong class="text-white">75 USDT <small class="text-secondary">($1,500 MXN)</small></strong>
-                    </div>
-                    <div class="d-flex justify-content-between small text-secondary mb-1">
-                        <span>Retorno Diario:</span>
-                        <strong class="text-green">+2.50 USDT/día <small>($50 MXN)</small></strong>
-                    </div>
-                    <div class="d-flex justify-content-between small text-secondary mb-3">
-                        <span>Ganancia Total:</span>
-                        <strong class="text-warning">75 USDT <small>($1,500 MXN)</small></strong>
-                    </div>
-                    <button class="btn btn-green w-100 py-2" onclick="alert('Plan Plata seleccionado.')">Invertir Ahora</button>
+                    <small class="d-block text-secondary mb-3">Duración: 60 días | Ganancia Total: 75 USDT ($1,500 MXN)</small>
+                    <button class="btn btn-green w-100" onclick="comprarPlan('Plan Plata', 75, 2.50, 60)">Comprar Plan (75 USDT)</button>
                 </div>
 
-                <!-- PLAN 3: ORO -->
+                <!-- PLAN 3 -->
                 <div class="plan-card p-4 mb-3">
-                    <div class="d-flex justify-content-between align-items-start mb-2">
-                        <div>
-                            <h5 class="fw-bold mb-0">Plan Oro</h5>
-                            <small class="text-secondary">Duración: 60 días</small>
-                        </div>
-                        <div class="text-end">
-                            <span class="fs-4 fw-bold text-green">3.25%</span>
-                            <small class="d-block text-secondary">AL DÍA</small>
-                        </div>
+                    <h5 class="fw-bold">Plan Oro</h5>
+                    <div class="d-flex justify-content-between small text-secondary">
+                        <span>Costo: <strong>200 USDT ($4,000 MXN)</strong></span>
+                        <span class="text-green"><strong>+6.50 USDT/día</strong></span>
                     </div>
-                    <hr class="border-secondary opacity-25">
-                    <div class="d-flex justify-content-between small text-secondary mb-1">
-                        <span>Costo:</span>
-                        <strong class="text-white">200 USDT <small class="text-secondary">($4,000 MXN)</small></strong>
-                    </div>
-                    <div class="d-flex justify-content-between small text-secondary mb-1">
-                        <span>Retorno Diario:</span>
-                        <strong class="text-green">+6.50 USDT/día <small>($130 MXN)</small></strong>
-                    </div>
-                    <div class="d-flex justify-content-between small text-secondary mb-3">
-                        <span>Ganancia Total:</span>
-                        <strong class="text-warning">190 USDT <small>($3,800 MXN)</small></strong>
-                    </div>
-                    <button class="btn btn-green w-100 py-2" onclick="alert('Plan Oro seleccionado.')">Invertir Ahora</button>
+                    <small class="d-block text-secondary mb-3">Duración: 60 días | Ganancia Total: 190 USDT ($3,800 MXN)</small>
+                    <button class="btn btn-green w-100" onclick="comprarPlan('Plan Oro', 200, 6.50, 60)">Comprar Plan (200 USDT)</button>
                 </div>
 
-                <!-- PLAN 4: PLATINO -->
+                <!-- PLAN 4 -->
                 <div class="plan-card p-4 mb-3">
-                    <div class="d-flex justify-content-between align-items-start mb-2">
-                        <div>
-                            <h5 class="fw-bold mb-0">Plan Platino</h5>
-                            <small class="text-secondary">Duración: 90 días</small>
-                        </div>
-                        <div class="text-end">
-                            <span class="fs-4 fw-bold text-green">2.40%</span>
-                            <small class="d-block text-secondary">AL DÍA</small>
-                        </div>
+                    <h5 class="fw-bold">Plan Platino</h5>
+                    <div class="d-flex justify-content-between small text-secondary">
+                        <span>Costo: <strong>500 USDT ($10,000 MXN)</strong></span>
+                        <span class="text-green"><strong>+12.00 USDT/día</strong></span>
                     </div>
-                    <hr class="border-secondary opacity-25">
-                    <div class="d-flex justify-content-between small text-secondary mb-1">
-                        <span>Costo:</span>
-                        <strong class="text-white">500 USDT <small class="text-secondary">($10,000 MXN)</small></strong>
-                    </div>
-                    <div class="d-flex justify-content-between small text-secondary mb-1">
-                        <span>Retorno Diario:</span>
-                        <strong class="text-green">+12.00 USDT/día <small>($240 MXN)</small></strong>
-                    </div>
-                    <div class="d-flex justify-content-between small text-secondary mb-3">
-                        <span>Ganancia Total:</span>
-                        <strong class="text-warning">580 USDT <small>($11,600 MXN)</small></strong>
-                    </div>
-                    <button class="btn btn-green w-100 py-2" onclick="alert('Plan Platino seleccionado.')">Invertir Ahora</button>
+                    <small class="d-block text-secondary mb-3">Duración: 90 días | Ganancia Total: 580 USDT ($11,600 MXN)</small>
+                    <button class="btn btn-green w-100" onclick="comprarPlan('Plan Platino', 500, 12.00, 90)">Comprar Plan (500 USDT)</button>
                 </div>
 
-                <!-- PLAN 5: ESMERALDA -->
+                <!-- PLAN 5 -->
                 <div class="plan-card p-4 mb-3">
-                    <div class="d-flex justify-content-between align-items-start mb-2">
-                        <div>
-                            <h5 class="fw-bold mb-0">Plan Esmeralda</h5>
-                            <small class="text-secondary">Duración: 90 días</small>
-                        </div>
-                        <div class="text-end">
-                            <span class="fs-4 fw-bold text-green">1.78%</span>
-                            <small class="d-block text-secondary">AL DÍA</small>
-                        </div>
+                    <h5 class="fw-bold">Plan Esmeralda</h5>
+                    <div class="d-flex justify-content-between small text-secondary">
+                        <span>Costo: <strong>2,250 USDT ($45,000 MXN)</strong></span>
+                        <span class="text-green"><strong>+40.00 USDT/día</strong></span>
                     </div>
-                    <hr class="border-secondary opacity-25">
-                    <div class="d-flex justify-content-between small text-secondary mb-1">
-                        <span>Costo:</span>
-                        <strong class="text-white">2,250 USDT <small class="text-secondary">($45,000 MXN)</small></strong>
-                    </div>
-                    <div class="d-flex justify-content-between small text-secondary mb-1">
-                        <span>Retorno Diario:</span>
-                        <strong class="text-green">+40.00 USDT/día <small>($800 MXN)</small></strong>
-                    </div>
-                    <div class="d-flex justify-content-between small text-secondary mb-3">
-                        <span>Ganancia Total:</span>
-                        <strong class="text-warning">3,600 USDT <small>($72,000 MXN)</small></strong>
-                    </div>
-                    <button class="btn btn-green w-100 py-2" onclick="alert('Plan Esmeralda seleccionado.')">Invertir Ahora</button>
+                    <small class="d-block text-secondary mb-3">Duración: 90 días | Ganancia Total: 3,600 USDT ($72,000 MXN)</small>
+                    <button class="btn btn-green w-100" onclick="comprarPlan('Plan Esmeralda', 2250, 40.00, 90)">Comprar Plan (2,250 USDT)</button>
                 </div>
 
-                <!-- PLAN 6: DIAMANTE VIP -->
-                <div class="plan-card p-4 mb-3" style="border-color: #f59e0b;">
-                    <div class="d-flex justify-content-between align-items-start mb-2">
-                        <div>
-                            <h5 class="fw-bold mb-0 text-warning">💎 Plan Diamante VIP</h5>
-                            <small class="text-secondary">Duración: 120 días</small>
-                        </div>
-                        <div class="text-end">
-                            <span class="fs-4 fw-bold text-green">1.40%</span>
-                            <small class="d-block text-secondary">AL DÍA</small>
-                        </div>
+                <!-- PLAN 6 -->
+                <div class="plan-card p-4 mb-3 border-warning">
+                    <h5 class="fw-bold text-warning">💎 Plan Diamante VIP</h5>
+                    <div class="d-flex justify-content-between small text-secondary">
+                        <span>Costo: <strong>5,000 USDT ($100,000 MXN)</strong></span>
+                        <span class="text-green"><strong>+70.00 USDT/día</strong></span>
                     </div>
-                    <hr class="border-secondary opacity-25">
-                    <div class="d-flex justify-content-between small text-secondary mb-1">
-                        <span>Costo:</span>
-                        <strong class="text-white">5,000 USDT <small class="text-secondary">($100,000 MXN)</small></strong>
-                    </div>
-                    <div class="d-flex justify-content-between small text-secondary mb-1">
-                        <span>Retorno Diario:</span>
-                        <strong class="text-green">+70.00 USDT/día <small>($1,400 MXN)</small></strong>
-                    </div>
-                    <div class="d-flex justify-content-between small text-secondary mb-3">
-                        <span>Ganancia Total:</span>
-                        <strong class="text-warning">8,400 USDT <small>($168,000 MXN)</small></strong>
-                    </div>
-                    <button class="btn btn-warning fw-bold w-100 py-2" onclick="alert('Plan Diamante VIP seleccionado.')">Invertir Ahora</button>
+                    <small class="d-block text-secondary mb-3">Duración: 120 días | Ganancia Total: 8,400 USDT ($168,000 MXN)</small>
+                    <button class="btn btn-warning fw-bold w-100" onclick="comprarPlan('Plan Diamante VIP', 5000, 70.00, 120)">Comprar Plan (5,000 USDT)</button>
                 </div>
             </div>
 
-            <!-- SISTEMA DE AFILIADOS -->
-            <div class="card card-dark p-4 mb-4" style="border-color: #b45309;">
-                <span class="badge bg-warning text-dark mb-2 fw-bold" style="width: fit-content;">🎁 SISTEMA DE AFILIADOS</span>
-                <h4 class="fw-bold">Gana 8% por cada invitado</h4>
-                <p class="text-secondary small mb-3">Comparte tu enlace de invitación único para recibir comisiones a tu saldo.</p>
-
+            <!-- AFILIADOS -->
+            <div class="card card-dark p-4 mb-4 border-warning">
+                <span class="badge bg-warning text-dark mb-2 fw-bold" style="width: fit-content;">🎁 REFERIDOS</span>
+                <h5 class="fw-bold">Gana 8% por cada invitado</h5>
                 <div class="input-group mb-3">
                     <input type="text" id="referralLinkInput" class="form-control bg-dark text-white border-secondary" readonly>
-                    <button class="btn btn-warning fw-bold px-3" onclick="copiarEnlace()">📋 Copiar</button>
-                </div>
-
-                <div class="bg-black p-3 rounded-3 border border-secondary">
-                    <div class="d-flex justify-content-between mb-2">
-                        <span class="text-secondary small">Amigos Registrados</span>
-                        <span id="friendsCount" class="fw-bold">0</span>
-                    </div>
-                    <div class="d-flex justify-content-between">
-                        <span class="text-secondary small">Comisiones Ganadas</span>
-                        <span id="friendsBonus" class="fw-bold text-warning">$0.00 USDT</span>
-                    </div>
+                    <button class="btn btn-warning fw-bold" onclick="copiarEnlace()">📋 Copiar</button>
                 </div>
             </div>
 
@@ -334,11 +231,13 @@
 
         <!-- DASHBOARD ADMIN -->
         <div id="adminDashboard" style="display: none;" class="card card-dark p-4 mb-4 border-warning">
-            <h4 class="fw-bold text-warning mb-3">🛡️ Panel de Administración</h4>
-            <h6 class="fw-bold text-white mb-3">Depósitos Pendientes de Confirmación (Bitso)</h6>
-            <div id="pendingDepositsList">
-                <p class="text-secondary small">Cargando solicitudes...</p>
-            </div>
+            <h4 class="fw-bold text-warning mb-3">🛡️ Panel Administrador</h4>
+            
+            <h6 class="fw-bold text-white mb-2">Depósitos Pendientes</h6>
+            <div id="pendingDepositsList" class="mb-4"><p class="text-secondary small">Sin depósitos pendientes.</p></div>
+
+            <h6 class="fw-bold text-white mb-2">Solicitudes de Retiro (Cuentas de Clientes)</h6>
+            <div id="pendingWithdrawalsList"><p class="text-secondary small">Sin retiros pendientes.</p></div>
         </div>
 
     </div>
@@ -347,17 +246,13 @@
         let currentUser = null;
 
         function switchAuthTab(tab) {
-            if (tab === 'login') {
-                document.getElementById('loginForm').style.display = 'block';
-                document.getElementById('registerForm').style.display = 'none';
-                document.getElementById('tab-login').classList.add('active');
-                document.getElementById('tab-register').classList.remove('active');
-            } else {
-                document.getElementById('loginForm').style.display = 'none';
-                document.getElementById('registerForm').style.display = 'block';
-                document.getElementById('tab-login').classList.remove('active');
-                document.getElementById('tab-register').classList.add('active');
-            }
+            document.getElementById('loginForm').style.display = tab === 'login' ? 'block' : 'none';
+            document.getElementById('registerForm').style.display = tab === 'register' ? 'block' : 'none';
+        }
+
+        function toggleSeccion(id) {
+            const el = document.getElementById(id);
+            el.style.display = el.style.display === 'none' ? 'block' : 'none';
         }
 
         async function handleLogin(e) {
@@ -375,32 +270,24 @@
             if (res.ok) {
                 currentUser = data.user;
                 cargarDashboard();
-            } else {
-                alert(data.error || 'Credenciales incorrectas');
-            }
+            } else { alert(data.error); }
         }
 
         async function handleRegister(e) {
             e.preventDefault();
-            const name = document.getElementById('regName').value;
-            const phone = document.getElementById('regPhone').value;
-            const password = document.getElementById('regPassword').value;
-            const referralCode = document.getElementById('regReferral').value;
-
             const res = await fetch('/api/register', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ name, phone, password, referralCode })
+                body: JSON.stringify({
+                    name: document.getElementById('regName').value,
+                    phone: document.getElementById('regPhone').value,
+                    password: document.getElementById('regPassword').value,
+                    referralCode: document.getElementById('regReferral').value
+                })
             });
-
             const data = await res.json();
-            if (res.ok) {
-                alert('¡Registro exitoso!');
-                switchAuthTab('login');
-                document.getElementById('loginPhone').value = phone;
-            } else {
-                alert(data.error || 'Error al registrarse');
-            }
+            if (res.ok) { alert('¡Registro completado!'); switchAuthTab('login'); }
+            else { alert(data.error); }
         }
 
         async function cargarDashboard() {
@@ -411,70 +298,33 @@
             const data = await res.json();
 
             if (res.ok) {
+                currentUser.balance = data.user.balance;
                 document.getElementById('userBalance').innerHTML = `$${data.user.balance.toFixed(2)} <span class="fs-6 text-secondary">USDT</span>`;
                 document.getElementById('friendsCount').innerText = data.referralsCount;
-                document.getElementById('friendsBonus').innerText = `$${data.referralBonus.toFixed(2)} USDT`;
                 document.getElementById('referralBonusText').innerText = `$${data.referralBonus.toFixed(2)} USDT`;
-                
-                const inviteUrl = `${window.location.origin}/?ref=${currentUser.phone}`;
-                document.getElementById('referralLinkInput').value = inviteUrl;
+                document.getElementById('referralLinkInput').value = `${window.location.origin}/?ref=${currentUser.phone}`;
 
                 if (currentUser.role === 'admin') {
                     document.getElementById('adminDashboard').style.display = 'block';
-                    document.getElementById('roleBadge').innerHTML = '<span class="badge bg-warning text-dark">MODO ADMIN</span>';
-                    cargarDepositosPendientes();
+                    document.getElementById('roleBadge').innerHTML = '<span class="badge bg-warning text-dark">ADMIN</span>';
+                    cargarDatosAdmin();
                 } else {
                     document.getElementById('roleBadge').innerHTML = '<span class="badge bg-success">CLIENTE</span>';
                 }
             }
-            renderChart();
+            cargarInversionesUsuario();
         }
 
-        function mostrarModalDeposito() { document.getElementById('depositSection').style.display = 'block'; }
-        function ocultarModalDeposito() { document.getElementById('depositSection').style.display = 'none'; }
-
-        async function enviarDepositoBitso() {
-            const amount = parseFloat(document.getElementById('depositAmount').value);
-            if (!amount || amount <= 0) return alert('Ingresa un monto válido.');
-
-            const res = await fetch('/api/deposit', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ userId: currentUser.id, phone: currentUser.phone, amount })
-            });
-
-            const data = await res.json();
-            alert(data.message);
-            ocultarModalDeposito();
-            document.getElementById('depositAmount').value = '';
-        }
-
-        async function cargarDepositosPendientes() {
-            const res = await fetch('/api/admin/pending-deposits');
-            const data = await res.json();
-            const container = document.getElementById('pendingDepositsList');
-
-            if (!data.deposits || data.deposits.length === 0) {
-                container.innerHTML = '<p class="text-secondary small">No hay depósitos pendientes.</p>';
-                return;
+        async function comprarPlan(planName, cost, dailyReturn, daysTotal) {
+            if (currentUser.balance < cost) {
+                return alert('Saldo insuficiente. Primero realiza un depósito.');
             }
+            if (!confirm(`¿Confirmas la compra del ${planName} por ${cost} USDT?`)) return;
 
-            container.innerHTML = data.deposits.map(d => `
-                <div class="d-flex justify-content-between align-items-center bg-dark p-2 mb-2 rounded border border-secondary">
-                    <div>
-                        <small class="d-block text-white">Tel: <strong>${d.phone}</strong></small>
-                        <small class="text-green">Monto: <strong>$${d.amount.toFixed(2)} USDT</strong></small>
-                    </div>
-                    <button class="btn btn-sm btn-success fw-bold" onclick="aprobarDeposito(${d.id}, ${d.user_id}, ${d.amount})">Confirmar</button>
-                </div>
-            `).join('');
-        }
-
-        async function aprobarDeposito(depositId, userId, amount) {
-            const res = await fetch('/api/admin/approve-deposit', {
+            const res = await fetch('/api/buy-plan', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ depositId, userId, amount })
+                body: JSON.stringify({ userId: currentUser.id, planName, cost, dailyReturn, daysTotal })
             });
 
             const data = await res.json();
@@ -482,11 +332,112 @@
             cargarDashboard();
         }
 
+        async function cargarInversionesUsuario() {
+            const res = await fetch(`/api/user-investments/${currentUser.id}`);
+            const data = await res.json();
+            const container = document.getElementById('userInvestmentsList');
+
+            if (!data.investments || data.investments.length === 0) {
+                container.innerHTML = '<p class="text-secondary small">No tienes compras activas.</p>';
+                return;
+            }
+
+            container.innerHTML = data.investments.map(inv => `
+                <div class="bg-dark p-3 rounded mb-2 border border-secondary">
+                    <div class="d-flex justify-content-between">
+                        <strong class="text-white">${inv.plan_name}</strong>
+                        <span class="badge bg-success">Día ${inv.days_passed} / ${inv.days_total}</span>
+                    </div>
+                    <small class="text-green d-block mt-1">Rendimiento diario: +$${inv.daily_return.toFixed(2)} USDT</small>
+                </div>
+            `).join('');
+        }
+
+        async function enviarDeposito() {
+            const amount = parseFloat(document.getElementById('depositAmount').value);
+            if (!amount) return alert('Ingresa un monto válido.');
+
+            const res = await fetch('/api/deposit', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ userId: currentUser.id, phone: currentUser.phone, amount })
+            });
+            const data = await res.json();
+            alert(data.message);
+            toggleSeccion('depositSection');
+        }
+
+        async function enviarRetiro() {
+            const bankDetails = document.getElementById('withdrawBankDetails').value;
+            const amount = parseFloat(document.getElementById('withdrawAmount').value);
+            if (!bankDetails || !amount) return alert('Llena todos los campos.');
+
+            const res = await fetch('/api/withdraw', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ userId: currentUser.id, phone: currentUser.phone, bankDetails, amount })
+            });
+            const data = await res.json();
+            alert(data.message);
+            toggleSeccion('withdrawSection');
+            cargarDashboard();
+        }
+
+        async function cargarDatosAdmin() {
+            const res = await fetch('/api/admin/pending-data');
+            const data = await res.json();
+
+            // Depósitos
+            const depList = document.getElementById('pendingDepositsList');
+            depList.innerHTML = data.deposits.length === 0 ? '<p class="text-secondary small">Sin depósitos pendientes.</p>' :
+                data.deposits.map(d => `
+                    <div class="d-flex justify-content-between bg-dark p-2 mb-2 rounded border border-secondary">
+                        <div>
+                            <small class="d-block text-white">Tel: ${d.phone}</small>
+                            <small class="text-green">Monto: $${d.amount} USDT</small>
+                        </div>
+                        <button class="btn btn-sm btn-success" onclick="aprobarDeposito(${d.id}, ${d.user_id}, ${d.amount})">Aprobar</button>
+                    </div>
+                `).join('');
+
+            // Retiros
+            const withList = document.getElementById('pendingWithdrawalsList');
+            withList.innerHTML = data.withdrawals.length === 0 ? '<p class="text-secondary small">Sin retiros pendientes.</p>' :
+                data.withdrawals.map(w => `
+                    <div class="bg-dark p-2 mb-2 rounded border border-danger">
+                        <small class="d-block text-white">Tel: <strong>${w.phone}</strong></small>
+                        <small class="d-block text-warning">Cuenta: <strong>${w.bank_details}</strong></small>
+                        <small class="d-block text-danger">Monto a Enviar: <strong>$${w.amount} USDT</strong></small>
+                        <button class="btn btn-sm btn-danger mt-2" onclick="aprobarRetiro(${w.id})">Marcar como Pagado</button>
+                    </div>
+                `).join('');
+        }
+
+        async function aprobarDeposito(depositId, userId, amount) {
+            await fetch('/api/admin/approve-deposit', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ depositId, userId, amount })
+            });
+            alert('Depósito aprobado.');
+            cargarDashboard();
+        }
+
+        async function aprobarRetiro(withdrawalId) {
+            await fetch('/api/admin/approve-withdrawal', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ withdrawalId })
+            });
+            alert('Retiro completado.');
+            cargarDashboard();
+        }
+
         function copiarEnlace() {
             const input = document.getElementById('referralLinkInput');
             input.select();
             navigator.clipboard.writeText(input.value);
-            alert('¡Enlace de invitación copiado!');
+            alert('¡Enlace copiado!');
         }
 
         function logout() {
@@ -494,31 +445,6 @@
             document.getElementById('mainDashboard').style.display = 'none';
             document.getElementById('adminDashboard').style.display = 'none';
             document.getElementById('authContainer').style.display = 'block';
-            document.getElementById('roleBadge').innerHTML = '';
-        }
-
-        function renderChart() {
-            const ctx = document.getElementById('growthChart').getContext('2d');
-            new Chart(ctx, {
-                type: 'line',
-                data: {
-                    labels: ['Día 1', 'Día 2', 'Día 3', 'Día 4', 'Día 5', 'Día 6', 'Día 7'],
-                    datasets: [{
-                        data: [20, 20.5, 21, 21.5, 22, 22.5, 23],
-                        borderColor: '#10b981',
-                        backgroundColor: 'rgba(16, 185, 129, 0.1)',
-                        fill: true,
-                        tension: 0.3
-                    }]
-                },
-                options: {
-                    plugins: { legend: { display: false } },
-                    scales: {
-                        x: { grid: { display: false }, ticks: { color: '#64748b' } },
-                        y: { grid: { color: '#1e293b' }, ticks: { color: '#64748b' } }
-                    }
-                }
-            });
         }
     </script>
 </body>
