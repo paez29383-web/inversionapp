@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Plataforma de Inversión - USDT</title>
+    
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        brand: { 50: '#f0fdf4', 500: '#22c55e', 600: '#16a34a', 700: '#15803d' },
+                        dark: { bg: '#0B0F17', card: '#111827', border: '#1F2937', hover: '#374151' }
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- Alpine.js -->
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="bg-dark-bg text-gray-100 min-h-screen font-sans antialiased" x-data="appData()" x-init="initApp()">
+
+    <!-- TOP NAVIGATION BAR -->
+    <nav class="border-b border-dark-border bg-dark-card/80 backdrop-blur-md sticky top-0 z-40">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <div class="flex items-center space-x-3">
+                    <div class="w-10 h-10 rounded-xl bg-brand-600 flex items-center justify-center shadow-lg shadow-brand-500/20">
+                        <i class="fa-solid fa-chart-line text-white text-xl"></i>
+                    </div>
+                    <div>
+                        <span class="text-xl font-bold tracking-wider text-white">INVERSIÓN<span class="text-brand-500">PRO</span></span>
+                        <div class="flex items-center space-x-1.5 text-[10px] text-gray-400">
+                            <span class="w-2 h-2 rounded-full bg-brand-500 animate-pulse"></span>
+                            <span>RED USDT (TRC-20)</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex items-center space-x-3">
+                    <!-- Modo Admin (Solo si el usuario logueado es admin) -->
+                    <template x-if="currentUser && currentUser.role === 'admin'">
+                        <div class="bg-dark-bg p-1 rounded-lg border border-dark-border flex text-xs">
+                            <button @click="viewMode = 'client'" :class="viewMode === 'client' ? 'bg-brand-600 text-white font-semibold' : 'text-gray-400'" class="px-3 py-1.5 rounded-md transition">Cliente</button>
+                            <button @click="viewMode = 'admin'; loadAdminData();" :class="viewMode === 'admin' ? 'bg-amber-600 text-white font-semibold' : 'text-gray-400'" class="px-3 py-1.5 rounded-md transition">Admin</button>
+                        </div>
+                    </template>
+
+                    <!-- Auth State Button -->
+                    <template x-if="!currentUser">
+                        <button @click="openAuthModal('login')" class="bg-brand-600 hover:bg-brand-500 text-white font-medium px-4 py-2 rounded-xl text-sm transition">
+                            <i class="fa-solid fa-right-to-bracket mr-2"></i> Ingresar
+                        </button>
+                    </template>
+                    <template x-if="currentUser">
+                        <div class="flex items-center space-x-3">
+                            <div class="hidden sm:flex flex-col text-right">
+                                <span class="text-xs font-semibold text-white" x-text="currentUser.name"></span>
+                                <span class="text-[10px] text-emerald-400" x-text="currentUser.role === 'admin' ? 'Administrador' : 'Cliente'"></span>
+                            </div>
+                            <button @click="logout()" class="text-gray-400 hover:text-red-400 p-2 rounded-lg transition" title="Cerrar Sesión">
+                                <i class="fa-solid fa-power-off text-lg"></i>
+                            </button>
+                        </div>
+                    </template>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- MAIN CONTAINER -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+
+        <!-- SI NO HA INICIADO SESIÓN -->
+        <template x-if="!currentUser">
+            <div class="text-center py-20 space-y-6">
+                <h2 class="text-3xl font-bold text-white">Bienvenido a la Plataforma de Inversión</h2>
+                <p class="text-gray-400 max-w-md mx-auto">Inicia sesión o regístrate para acceder a tus inversiones, realizar depósitos en USDT y generar ganancias diarias.</p>
+                <div class="flex justify-center space-x-4">
+                    <button @click="openAuthModal('login')" class="bg-brand-600 hover:bg-brand-500 text-white font-bold px-6 py-3 rounded-xl">Iniciar Sesión</button>
+                    <button @click="openAuthModal('register')" class="bg-dark-card border border-dark-border hover:bg-dark-hover text-white font-bold px-6 py-3 rounded-xl">Registrarse</button>
+                </div>
+            </div>
+        </template>
+
+        <!-- VISTA CLIENTE -->
+        <template x-if="currentUser && viewMode === 'client'">
+            <div class="space-y-8">
+                <!-- Balance Box -->
+                <div class="bg-gradient-to-br from-dark-card to-emerald-950/30 p-6 sm:p-8 rounded-2xl border border-dark-border shadow-xl flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                    <div>
+                        <p class="text-sm font-medium text-gray-400 uppercase">Tu Saldo Disponible</p>
+                        <h2 class="text-4xl sm:text-5xl font-extrabold text-white mt-1">
+                            $<span x-text="formatMoney(userBalance)"></span> <span class="text-lg font-normal text-emerald-400">USDT</span>
+                        </h2>
+                    </div>
+                    <div class="flex items-center space-x-3 w-full sm:w-auto">
+                        <button @click="activeModal = 'deposit'" class="flex-1 sm:flex-initial bg-brand-600 hover:bg-brand-500 text-white font-semibold px-5 py-3 rounded-xl transition">
+                            <i class="fa-solid fa-arrow-down-left mr-2"></i> Depositar USDT
+                        </button>
+                        <button @click="activeModal = 'withdraw'" class="flex-1 sm:flex-initial bg-dark-bg hover:bg-dark-hover text-gray-200 border border-dark-border font-semibold px-5 py-3 rounded-xl transition">
+                            <i class="fa-solid fa-arrow-up-right mr-2"></i> Retirar USDT
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Productos de Inversión -->
+                <div>
+                    <h2 class="text-2xl font-bold text-white mb-6 flex items-center">
+                        <i class="fa-solid fa-cubes text-brand-500 mr-3"></i> Planes de Inversión
+                    </h2>
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        <template x-for="product in products" :key="product.id">
+                            <div class="bg-dark-card rounded-2xl border border-dark-border p-6 space-y-4 shadow-lg flex flex-col justify-between">
+                                <div>
+                                    <div class="flex justify-between items-center mb-3">
+                                        <h3 class="font-bold text-lg text-white" x-text="product.name"></h3>
+                                        <span class="text-brand-500 font-black text-xl" x-text="product.daily_rate + '% diario'"></span>
+                                    </div>
+                                    <div class="space-y-2 text-sm text-gray-400">
+                                        <div class="flex justify-between"><span>Costo:</span> <span class="text-white font-semibold">$<span x-text="formatMoney(product.price)"></span> USDT</span></div>
+                                        <div class="flex justify-between"><span>Duración:</span> <span class="text-white font-semibold" x-text="product.days + ' días'"></span></div>
+                                        <div class="flex justify-between"><span>Retorno Diario:</span> <span class="text-emerald-400 font-semibold">+$<span x-text="formatMoney(product.price * (product.daily_rate / 100))"></span> USDT</span></div>
+                                    </div>
+                                </div>
+                                <button @click="invest(product.id)" class="w-full bg-brand-600 hover:bg-brand-500 text-white font-bold py-3 rounded-xl transition">
+                                    Invertir Ahora
+                                </button>
+                            </div>
+                        </template>
+                    </div>
+                </div>
+            </div>
+        </template>
+
+        <!-- VISTA ADMIN -->
+        <template x-if="currentUser && currentUser.role === 'admin' && viewMode === 'admin'">
+            <div class="space-y-8">
+                <div class="bg-amber-950/30 border border-amber-800/50 p-4 rounded-xl text-amber-300 text-sm">
+                    <i class="fa-solid fa-shield-halved mr-2"></i> Panel de Control de Administrador: Aprueba depósitos y retiros en USDT.
+                </div>
+
+                <div class="bg-dark-card p-6 rounded-2xl border border-dark-border space-y-4">
+                    <h3 class="text-xl font-bold text-white">Transacciones Pendientes de Aprobación</h3>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left text-sm text-gray-300">
+                            <thead class="bg-dark-bg text-gray-400 uppercase text-xs">
+                                <tr>
+                                    <th class="p-3">Usuario</th>
+                                    <th class="p-3">Tipo</th>
+                                    <th class="p-3">Monto (USDT)</th>
+                                    <th class="p-3">Wallet / Detalles</th>
+                                    <th class="p-3 text-right">Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-dark-border">
+                                <template x-for="tx in pendingTransactions" :key="tx.id">
+                                    <tr>
+                                        <td class="p-3 font-semibold text-white" x-text="tx.name + ' (' + tx.phone + ')'"></td>
+                                        <td class="p-3 uppercase text-xs font-bold" :class="tx.type === 'deposit' ? 'text-emerald-400' : 'text-amber-400'" x-text="tx.type"></td>
+                                        <td class="p-3 font-bold text-white">$<span x-text="formatMoney(tx.amount)"></span> USDT</td>
+                                        <td class="p-3 text-gray-400 text-xs font-mono" x-text="tx.details"></td>
+                                        <td class="p-3 text-right space-x-2">
+                                            <button @click="approveTx(tx.id, 'approve')" class="bg-emerald-600 hover:bg-emerald-500 text-white px-3 py-1.5 rounded-lg text-xs font-bold">Aprobar</button>
+                                            <button @click="approveTx(tx.id, 'reject')" class="bg-red-600 hover:bg-red-500 text-white px-3 py-1.5 rounded-lg text-xs font-bold">Rechazar</button>
+                                        </td>
+                                    </tr>
+                                </template>
+                            </tbody>
+                        </table>
+                        <p class="text-xs text-gray-500 mt-4 text-center" x-show="pendingTransactions.length === 0">No hay transacciones pendientes.</p>
+                    </div>
+                </div>
+            </div>
+        </template>
+
+    </main>
+
+    <!-- MODAL AUTH -->
+    <div x-show="showAuthModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm" x-cloak>
+        <div class="bg-dark-card border border-dark-border w-full max-w-md rounded-2xl p-6 space-y-6 relative">
+            <button @click="showAuthModal = false" class="absolute top-4 right-4 text-gray-400 hover:text-white"><i class="fa-solid fa-xmark text-xl"></i></button>
+            <h3 class="text-xl font-bold text-white text-center" x-text="authTab === 'login' ? 'Iniciar Sesión' : 'Crear Cuenta'"></h3>
+            
+            <div class="space-y-4">
+                <template x-if="authTab === 'register'">
+                    <div>
+                        <label class="block text-xs text-gray-400 mb-1">Nombre Completo</label>
+                        <input type="text" x-model="authForm.name" class="bg-dark-bg border border-dark-border text-white text-sm rounded-xl p-3 w-full">
+                    </div>
+                </template>
+                <div>
+                    <label class="block text-xs text-gray-400 mb-1">Número de Teléfono</label>
+                    <input type="tel" x-model="authForm.phone" placeholder="5512345678" class="bg-dark-bg border border-dark-border text-white text-sm rounded-xl p-3 w-full">
+                </div>
+                <div>
+                    <label class="block text-xs text-gray-400 mb-1">Contraseña</label>
+                    <input type="password" x-model="authForm.password" class="bg-dark-bg border border-dark-border text-white text-sm rounded-xl p-3 w-full">
+                </div>
+                <button @click="submitAuth()" class="w-full bg-brand-600 hover:bg-brand-500 text-white font-bold py-3 rounded-xl transition" x-text="authTab === 'login' ? 'Entrar' : 'Registrarse'"></button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL DEPOSITO USDT CON GUÍA PASO A PASO -->
+    <div x-show="activeModal === 'deposit'" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm" x-cloak>
+        <div class="bg-dark-card border border-dark-border w-full max-w-md rounded-2xl p-6 space-y-4 relative shadow-2xl max-h-[90vh] overflow-y-auto">
+            <button @click="activeModal = null" class="absolute top-4 right-4 text-gray-400 hover:text-white">
+                <i class="fa-solid fa-xmark text-xl"></i>
+            </button>
+            
+            <h3 class="text-xl font-bold text-white flex items-center">
+                <i class="fa-solid fa-arrow-down-left text-brand-500 mr-2"></i> Recargar Saldo con USDT
+            </h3>
+            
+            <!-- DIRECCIÓN WALLET -->
+            <div class="bg-dark-bg p-4 rounded-xl border border-dark-border space-y-3 text-xs">
+                <div class="flex justify-between border-b border-dark-border/60 pb-2">
+                    <span class="text-gray-400">Red Requerida:</span>
+                    <span class="font-bold text-amber-400" x-text="walletInfo.network"></span>
+                </div>
+                <div>
+                    <span class="text-gray-400 block mb-1">Dirección de Billetera USDT:</span>
+                    <div class="flex items-center justify-between bg-dark-card p-2.5 rounded-lg border border-dark-border">
+                        <span class="font-mono text-xs text-emerald-400 truncate mr-2" x-text="walletInfo.address"></span>
+                        <button @click="copyWallet()" class="text-xs bg-brand-600 hover:bg-brand-500 text-white px-2.5 py-1 rounded transition shrink-0">
+                            Copiar
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- INSTRUCTIVO SENCILLO DE 3 PASOS PARA PRINCIPIANTES -->
+            <div class="bg-emerald-950/20 border border-emerald-800/40 p-3.5 rounded-xl text-xs space-y-2">
+                <p class="font-bold text-emerald-400 flex items-center">
+                    <i class="fa-solid fa-circle-info mr-1.5"></i> ¿Cómo depositar usando Bitso / Banco local?
+                </p>
+                <ol class="list-decimal list-inside text-gray-300 space-y-1 pl-1">
+                    <li>Abre tu app **Bitso** y transfiere pesos desde tu banco por SPEI.</li>
+                    <li>En Bitso, presiona **Comprar USDT** con tus pesos.</li>
+                    <li>Presiona **Enviar ➔ USDT**, elige **Red Tron (TRC-20)**, pega la dirección copiada arriba y listo.</li>
+                </ol>
+            </div>
+
+            <!-- FORMULARIO DE NOTIFICACIÓN -->
+            <div class="space-y-3 pt-1">
+                <div>
+                    <label class="block text-xs text-gray-400 mb-1">Monto depositado (USDT)</label>
+                    <input type="number" x-model.number="depositAmount" class="bg-dark-bg border border-dark-border text-white text-lg font-bold rounded-xl p-3 w-full focus:outline-none">
+                </div>
+
+                <button @click="requestDeposit()" class="w-full bg-brand-600 hover:bg-brand-500 text-white font-bold py-3 rounded-xl transition shadow-md shadow-brand-600/20">
+                    Notificar Depósito Realizado
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL WITHDRAW USDT -->
+    <div x-show="activeModal === 'withdraw'" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm" x-cloak>
+        <div class="bg-dark-card border border-dark-border w-full max-w-md rounded-2xl p-6 space-y-5 relative">
+            <button @click="activeModal = null" class="absolute top-4 right-4 text-gray-400 hover:text-white"><i class="fa-solid fa-xmark text-xl"></i></button>
+            <h3 class="text-xl font-bold text-white">Solicitar Retiro en USDT</h3>
+            <div>
+                <label class="block text-xs text-gray-400 mb-1">Monto a retirar (USDT)</label>
+                <input type="number" x-model.number="withdrawAmount" class="bg-dark-bg border border-dark-border text-white font-bold rounded-xl p-3 w-full">
+            </div>
+            <div>
+                <label class="block text-xs text-gray-400 mb-1">Tu Dirección de Wallet USDT (Red TRC-20 / Bitso)</label>
+                <input type="text" x-model="withdrawClabe" placeholder="Pega tu wallet de Bitso o Binance aquí..." class="bg-dark-bg border border-dark-border text-white text-xs rounded-xl p-3 w-full font-mono">
+            </div>
+            <button @click="requestWithdraw()" class="w-full bg-amber-600 hover:bg-amber-500 text-white font-bold py-3 rounded-xl">Solicitar Retiro</button>
+        </div>
+    </div>
+
+    <!-- SCRIPT DE CONEXIÓN -->
+    <script>
+        function appData() {
+            return {
+                viewMode: 'client',
+                currentUser: null,
+                showAuthModal: false,
+                authTab: 'login',
+                activeModal: null,
+                products: [],
+                userBalance: 0,
+                pendingTransactions: [],
+                depositAmount: 50,
+                withdrawAmount: 20,
+                withdrawClabe: '',
+                authForm: { name: '', phone: '', password: '' },
+
+                // BILLETERA DEPOSITOS USDT
+                walletInfo: {
+                    network: 'Red Tron (TRC-20)',
+                    address: 'TTZfrswAyDF9GLt5SrcbmpNtGXQbreeSrT'
+                },
+
+                initApp() {
+    // Cargar productos de forma general
+    fetch('/api/products')
+        .then(res => res.json())
+        .then(products => {
+            this.products = products;
+        });
+
+    const savedUser = localStorage.getItem('user');
+    if (savedUser) {
+        this.currentUser = JSON.parse(savedUser);
+        this.loadUserData();
+    }
+},
+
+                loadUserData() {
+                    if (!this.currentUser) return;
+                    fetch(`/api/data/${this.currentUser.id}`)
+                        .then(res => res.json())
+                        .then(data => {
+                            this.userBalance = data.user.balance;
+                            this.products = data.products;
+                        });
+                },
+
+                copyWallet() {
+                    navigator.clipboard.writeText(this.walletInfo.address);
+                    alert('¡Dirección de Wallet copiada al portapapeles!');
+                },
+
+                openAuthModal(tab) {
+                    this.authTab = tab;
+                    this.showAuthModal = true;
+                },
+
+                submitAuth() {
+                    const endpoint = this.authTab === 'login' ? '/api/login' : '/api/register';
+                    fetch(endpoint, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(this.authForm)
+                    })
+                    .then(res => res.json())
+                    .then(data => {
+                        if (data.error) {
+                            alert(data.error);
+                        } else {
+                            this.currentUser = data.user || { id: data.userId, name: this.authForm.name, role: data.role };
+                            localStorage.setItem('user', JSON.stringify(this.currentUser));
+                            this.showAuthModal = false;
+                            this.loadUserData();
+                            alert('¡Operación exitosa!');
+                        }
+                    });
+                },
+
+                logout() {
+                    localStorage.removeItem('user');
+                    this.currentUser = null;
+                    this.viewMode = 'client';
+                },
+
+                requestDeposit() {
+                    fetch('/api/deposit', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ userId: this.currentUser.id, amount: this.depositAmount })
+                    })
+                    .then(res => res.json())
+                    .then(data => {
+                        alert(data.message);
+                        this.activeModal = null;
+                    });
+                },
+
+                requestWithdraw() {
+                    fetch('/api/withdraw', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ userId: this.currentUser.id, amount: this.withdrawAmount, clabe: this.withdrawClabe })
+                    })
+                    .then(res => res.json())
+                    .then(data => {
+                        if (data.error) alert(data.error);
+                        else {
+                            alert(data.message);
+                            this.activeModal = null;
+                            this.loadUserData();
+                        }
+                    });
+                },
+
+                invest(productId) {
+                    fetch('/api/invest', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ userId: this.currentUser.id, productId })
+                    })
+                    .then(res => res.json())
+                    .then(data => {
+                        if (data.error) alert(data.error);
+                        else {
+                            alert(data.message);
+                            this.userBalance = data.newBalance;
+                        }
+                    });
+                },
+
+                loadAdminData() {
+                    fetch('/api/admin/pending')
+                        .then(res => res.json())
+                        .then(data => {
+                            this.pendingTransactions = data;
+                        });
+                },
+
+                approveTx(txId, action) {
+                    fetch('/api/admin/approve', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ txId, action })
+                    })
+                    .then(res => res.json())
+                    .then(data => {
+                        alert('Transacción actualizada');
+                        this.loadAdminData();
+                    });
+                },
+
+                formatMoney(val) {
+                    return Number(val || 0).toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                }
+            }
+        }
+    </script>
+</body>
+</html>
